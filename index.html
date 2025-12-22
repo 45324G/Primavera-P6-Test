@@ -16,7 +16,7 @@
         .bubble.active { background-color: #3b82f6; transform: scale(1.4); box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
         .bubble.correct { background-color: #22c55e; }
         .bubble.wrong { background-color: #ef4444; }
-        /* Анимация таймера */
+        /* Таймер */
         .timer-container { font-variant-numeric: tabular-nums; }
         .timer-warn { color: #dc2626; animation: pulse 1s infinite; }
         @keyframes pulse { 50% { opacity: 0.5; } }
@@ -37,10 +37,14 @@
         </div>
         <h1 class="text-2xl font-bold text-slate-900 mb-2">Тест на знание<br>Oracle Primavera P6</h1>
         <p class="text-slate-500 mb-6 text-sm">Введите код доступа для начала сессии.</p>
+        
         <input type="tel" id="input-code" maxlength="6" placeholder="• • • • • •" 
                class="w-full text-center text-3xl tracking-[0.5em] font-bold py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none mb-4 transition-colors">
+        
         <p id="msg-error" class="text-red-500 text-sm mb-4 hidden font-semibold"></p>
+        
         <button onclick="doLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg">Войти</button>
+        <p id="attempts-left" class="text-xs text-slate-400 mt-2 hidden"></p>
     </div>
 
     <div id="view-rules" class="hidden max-w-md w-full bg-white p-8 rounded-2xl shadow-xl fade-in">
@@ -82,7 +86,6 @@
             <div class="w-full max-w-2xl bg-white sm:rounded-2xl sm:shadow-lg sm:border border-slate-200 p-6 sm:p-10 fade-in">
                 <h3 id="ui-question" class="text-xl sm:text-2xl font-bold text-slate-900 mb-8 leading-snug">Загрузка...</h3>
                 <div id="ui-options" class="space-y-3"></div>
-                
                 <div id="ui-feedback" class="hidden mt-8 pt-6 border-t border-slate-100 fade-in">
                     <div class="bg-red-50 border border-red-100 rounded-xl p-5 mb-4">
                         <div class="flex items-center gap-2 text-red-600 font-bold mb-2"><i class="fa-solid fa-circle-exclamation"></i> Ошибка</div>
@@ -133,25 +136,69 @@
         // CONFIG
         const BLOCKS = 4;
         const QUESTIONS_PER_BLOCK = 25;
-        const TIME_LIMIT_MIN = 10; // Сократил до 10 минут
+        const TIME_LIMIT_MIN = 10;
         const PASS_PERCENT = 60;
+        const MAX_LOGIN_ATTEMPTS = 3;
 
         let userCode = "", currentLevel = 1, currentQuestions = [], currentIndex = 0, blockScore = 0, totalScore = 0, wrongTopics = [];
         let timer = null, timeLeft = 0, isAnswerLocked = false;
+        
+        // Читаем попытки из памяти
+        let loginAttempts = parseInt(localStorage.getItem('p6_attempts')) || 0;
+
+        // INIT LOGIN UI
+        window.onload = function() {
+            checkLockout();
+        }
+
+        function checkLockout() {
+            if(loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+                document.getElementById('input-code').disabled = true;
+                document.getElementById('btn-login').disabled = true;
+                document.getElementById('btn-login').innerText = "Доступ заблокирован";
+                document.getElementById('btn-login').className = "w-full bg-slate-400 text-white font-bold py-3.5 rounded-xl cursor-not-allowed";
+                document.getElementById('msg-error').innerText = "Превышено количество попыток. Попробуйте позже.";
+                document.getElementById('msg-error').classList.remove('hidden');
+            }
+        }
 
         async function doLogin() {
+            if(loginAttempts >= MAX_LOGIN_ATTEMPTS) return;
+
             const input = document.getElementById('input-code');
             const btn = document.getElementById('btn-login');
             const err = document.getElementById('msg-error');
+            
             userCode = input.value.trim();
             if(userCode.length < 6) { err.innerText = "Код должен содержать 6 цифр"; err.classList.remove('hidden'); return; }
+
             btn.disabled = true; btn.innerHTML = '<span class="loader"></span>'; err.classList.add('hidden');
+
             try {
                 const res = await fetch(`${API_URL}?code=${userCode}`);
                 const data = await res.json();
-                if(data.success) { showScreen('view-rules'); } 
-                else { err.innerText = data.message || "Ошибка доступа"; err.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Войти"; }
-            } catch(e) { err.innerText = "Ошибка сети"; err.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Войти"; }
+                
+                if(data.success) {
+                    // Сброс попыток при успехе
+                    localStorage.setItem('p6_attempts', 0);
+                    showScreen('view-rules'); 
+                } else {
+                    // Ошибка входа
+                    loginAttempts++;
+                    localStorage.setItem('p6_attempts', loginAttempts);
+                    
+                    err.innerText = data.message || "Ошибка доступа"; 
+                    err.classList.remove('hidden'); 
+                    btn.disabled = false; btn.innerText = "Войти";
+                    
+                    document.getElementById('attempts-left').innerText = `Попыток осталось: ${MAX_LOGIN_ATTEMPTS - loginAttempts}`;
+                    document.getElementById('attempts-left').classList.remove('hidden');
+                    
+                    checkLockout();
+                }
+            } catch(e) { 
+                err.innerText = "Ошибка сети"; err.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Войти"; 
+            }
         }
 
         function startLevel(lvl) {
@@ -281,11 +328,4 @@
             if(timeLeft < 60) el.parentElement.classList.add('timer-warn'); else el.parentElement.classList.remove('timer-warn');
         }
         async function sendProgressData(action, scoreVal = 0) {
-            let p = { action: action, code: userCode, wrongTopics: JSON.stringify(wrongTopics) };
-            if(action === 'save_level') { p.level = currentLevel; p.score = scoreVal; }
-            else if (action === 'progress') { p.action = 'update_progress'; p.lastQuestion = (currentLevel-1)*QUESTIONS_PER_BLOCK + currentIndex + 1; }
-            try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(p) }); } catch(e) {}
-        }
-    </script>
-</body>
-</html>
+            let p = { action: action, code: user
