@@ -1,331 +1,77 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест Primavera P6</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Кругляшки */
-        .bubble { width: 12px; height: 12px; background-color: #e2e8f0; border-radius: 50%; transition: all 0.3s; }
-        .bubble.active { background-color: #3b82f6; transform: scale(1.4); box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-        .bubble.correct { background-color: #22c55e; }
-        .bubble.wrong { background-color: #ef4444; }
-        /* Таймер */
-        .timer-container { font-variant-numeric: tabular-nums; }
-        .timer-warn { color: #dc2626; animation: pulse 1s infinite; }
-        @keyframes pulse { 50% { opacity: 0.5; } }
-        /* Лоадер */
-        .loader { width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4">
+function doGet(e) {
+  const code = e.parameter.code;
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Users');
+  const rows = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < rows.length; i++) {
+    // Сравниваем код (приводим к строке)
+    if (rows[i][0].toString() == code) {
+      
+      // ЗАЩИТА ОТ ПОВТОРНОГО ВХОДА
+      // Если статус не пустой (значит там STARTED или FINISHED), то блокируем
+      if (rows[i][1] !== '') {
+        return responseJSON({ 
+          success: false, 
+          message: 'Этот код уже был активирован. Повторный вход запрещен правилами безопасности.' 
+        });
+      }
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzU17rCYuqwhRvxvunLRkvVUtmV1Qii74MuSLcQyAy2xPUgPjoY9rGC-zwST7RLcC5o/exec"; 
-    </script>
+      // Если чисто - пускаем и ставим метку STARTED
+      sheet.getRange(i + 1, 2).setValue('STARTED'); // Статус
+      sheet.getRange(i + 1, 7).setValue(new Date()); // Дата (Col G)
+      
+      return responseJSON({ success: true, message: 'OK' });
+    }
+  }
+  
+  // Если код не найден в таблице
+  return responseJSON({ success: false, message: 'Неверный код доступа.' });
+}
 
-    <div id="view-login" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl text-center fade-in">
-        <div class="mb-4 inline-block p-4 bg-blue-50 rounded-full text-blue-600 text-3xl">
-            <i class="fa-solid fa-user-check"></i>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-900 mb-2">Тест на знание<br>Oracle Primavera P6</h1>
-        <p class="text-slate-500 mb-6 text-sm">Введите код доступа для начала сессии.</p>
-        
-        <input type="tel" id="input-code" maxlength="6" placeholder="• • • • • •" 
-               class="w-full text-center text-3xl tracking-[0.5em] font-bold py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none mb-4 transition-colors">
-        
-        <p id="msg-error" class="text-red-500 text-sm mb-4 hidden font-semibold"></p>
-        
-        <button onclick="doLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg">Войти</button>
-        <p id="attempts-left" class="text-xs text-slate-400 mt-2 hidden"></p>
-    </div>
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Users');
+    const data = JSON.parse(e.postData.contents);
+    const code = data.code.toString();
+    const rows = sheet.getDataRange().getValues();
+    
+    let rowIndex = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0].toString() == code) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
 
-    <div id="view-rules" class="hidden max-w-md w-full bg-white p-8 rounded-2xl shadow-xl fade-in">
-        <h2 class="text-2xl font-bold mb-6 text-slate-900">Правила тестирования</h2>
-        <div class="space-y-5 mb-8">
-            <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-layer-group"></i></div>
-                <div><h3 class="font-bold text-slate-800">4 Уровня</h3><p class="text-sm text-slate-500">Сложность растет от "Новичка" до "Эксперта".</p></div>
-            </div>
-            <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-stopwatch"></i></div>
-                <div><h3 class="font-bold text-slate-800">10 Минут</h3><p class="text-sm text-slate-500">Лимит времени на каждый блок.</p></div>
-            </div>
-            <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-lock"></i></div>
-                <div><h3 class="font-bold text-slate-800">Проходной балл 60%</h3><p class="text-sm text-slate-500">Для перехода на следующий уровень.</p></div>
-            </div>
-        </div>
-        <button onclick="startLevel(1)" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-all">Начать Блок 1</button>
-    </div>
+    if (rowIndex === -1) return responseJSON({ success: false, error: 'User not found' });
 
-    <div id="view-quiz" class="hidden w-full max-w-3xl flex flex-col min-h-screen bg-white sm:bg-transparent">
-        <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm sm:rounded-b-2xl">
-            <div class="max-w-3xl mx-auto px-4 py-4">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center gap-3">
-                        <span class="bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded text-sm">Уровень <span id="ui-level">1</span></span>
-                        <span class="text-sm font-semibold text-slate-400">Вопрос <span id="ui-qnum">1</span>/25</span>
-                    </div>
-                    <div class="timer-container font-mono text-xl font-bold text-slate-700 flex items-center gap-2">
-                        <i class="fa-regular fa-clock text-slate-400 text-sm"></i><span id="ui-timer">10:00</span>
-                    </div>
-                </div>
-                <div id="ui-bubbles" class="flex justify-between gap-1"></div>
-            </div>
-        </header>
+    // 1. UPDATE: Фоновое сохранение (Колонки H и I)
+    if (data.action === 'update_progress') {
+      sheet.getRange(rowIndex, 8).setValue(data.lastQuestion); 
+      sheet.getRange(rowIndex, 9).setValue(data.wrongTopics);
+      return responseJSON({ success: true });
+    }
 
-        <main class="flex-grow flex flex-col items-center justify-start sm:justify-center p-4 w-full pb-20">
-            <div class="w-full max-w-2xl bg-white sm:rounded-2xl sm:shadow-lg sm:border border-slate-200 p-6 sm:p-10 fade-in">
-                <h3 id="ui-question" class="text-xl sm:text-2xl font-bold text-slate-900 mb-8 leading-snug">Загрузка...</h3>
-                <div id="ui-options" class="space-y-3"></div>
-                <div id="ui-feedback" class="hidden mt-8 pt-6 border-t border-slate-100 fade-in">
-                    <div class="bg-red-50 border border-red-100 rounded-xl p-5 mb-4">
-                        <div class="flex items-center gap-2 text-red-600 font-bold mb-2"><i class="fa-solid fa-circle-exclamation"></i> Ошибка</div>
-                        <p id="ui-explanation" class="text-slate-700 leading-relaxed"></p>
-                    </div>
-                    <button onclick="nextQuestionManually()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-all">Далее <i class="fa-solid fa-arrow-right ml-2"></i></button>
-                </div>
-            </div>
-        </main>
-    </div>
+    // 2. SAVE LEVEL: Сохранение баллов за уровень
+    if (data.action === 'save_level') {
+      const level = parseInt(data.level);
+      // Col 3=Lv1, 4=Lv2, 5=Lv3, 6=Lv4
+      sheet.getRange(rowIndex, 2 + level).setValue(data.score);
+      return responseJSON({ success: true });
+    }
 
-    <div id="view-level-result" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md p-4 fade-in">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-md w-full">
-            <div id="lvl-icon" class="mb-4 text-5xl"></div>
-            <h2 id="lvl-title" class="text-2xl font-bold mb-2 text-slate-900">...</h2>
-            <div class="text-6xl font-black my-6 text-slate-800" id="lvl-score">0%</div>
-            <p id="lvl-msg" class="text-slate-500 mb-8"></p>
-            <div class="flex flex-col gap-3">
-                <button id="btn-next-lvl" onclick="startNextLevel()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg">Следующий уровень</button>
-                <button onclick="finishTest()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl">Завершить</button>
-            </div>
-        </div>
-    </div>
+    // 3. FINISH: Финал
+    if (data.action === 'finish_test') {
+      sheet.getRange(rowIndex, 2).setValue('FINISHED');
+      sheet.getRange(rowIndex, 9).setValue(data.wrongTopics);
+      return responseJSON({ success: true });
+    }
+    
+  } catch (err) {
+    return responseJSON({ success: false, error: err.toString() });
+  }
+}
 
-    <div id="view-final" class="hidden bg-white min-h-screen p-8 max-w-3xl mx-auto fade-in">
-        <div class="text-center mb-10">
-            <div class="inline-block p-4 bg-green-100 rounded-full text-green-600 text-4xl mb-4"><i class="fa-solid fa-check"></i></div>
-            <h2 class="text-3xl font-bold text-slate-900">Результаты</h2>
-        </div>
-        <div class="grid grid-cols-2 gap-6 border-b border-slate-200 pb-8 mb-8">
-            <div><span class="text-xs font-bold text-slate-400 uppercase">Сотрудник</span><div class="text-xl font-mono font-bold text-slate-800" id="final-code">---</div></div>
-            <div><span class="text-xs font-bold text-slate-400 uppercase">Дата</span><div class="text-xl font-bold text-slate-800" id="final-date">---</div></div>
-            <div class="col-span-2"><span class="text-xs font-bold text-slate-400 uppercase">Итог</span><div class="text-3xl font-black text-blue-600" id="final-score">0 / 100</div></div>
-        </div>
-        <div id="final-recommendations" class="hidden">
-            <h3 class="text-sm font-bold text-slate-900 uppercase mb-4 border-l-4 border-red-500 pl-3">Темы для изучения</h3>
-            <ul id="topic-list" class="space-y-2 text-sm text-slate-600 bg-slate-50 p-6 rounded-xl border border-slate-100"></ul>
-        </div>
-        <div class="mt-10 flex gap-4 print:hidden">
-            <button onclick="window.print()" class="flex-1 bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800"><i class="fa-solid fa-print mr-2"></i> PDF / Печать</button>
-            <button onclick="location.reload()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl">Закрыть</button>
-        </div>
-    </div>
-
-    <script src="questions.js"></script>
-
-    <script>
-        // CONFIG
-        const BLOCKS = 4;
-        const QUESTIONS_PER_BLOCK = 25;
-        const TIME_LIMIT_MIN = 10;
-        const PASS_PERCENT = 60;
-        const MAX_LOGIN_ATTEMPTS = 3;
-
-        let userCode = "", currentLevel = 1, currentQuestions = [], currentIndex = 0, blockScore = 0, totalScore = 0, wrongTopics = [];
-        let timer = null, timeLeft = 0, isAnswerLocked = false;
-        
-        // Читаем попытки из памяти
-        let loginAttempts = parseInt(localStorage.getItem('p6_attempts')) || 0;
-
-        // INIT LOGIN UI
-        window.onload = function() {
-            checkLockout();
-        }
-
-        function checkLockout() {
-            if(loginAttempts >= MAX_LOGIN_ATTEMPTS) {
-                document.getElementById('input-code').disabled = true;
-                document.getElementById('btn-login').disabled = true;
-                document.getElementById('btn-login').innerText = "Доступ заблокирован";
-                document.getElementById('btn-login').className = "w-full bg-slate-400 text-white font-bold py-3.5 rounded-xl cursor-not-allowed";
-                document.getElementById('msg-error').innerText = "Превышено количество попыток. Попробуйте позже.";
-                document.getElementById('msg-error').classList.remove('hidden');
-            }
-        }
-
-        async function doLogin() {
-            if(loginAttempts >= MAX_LOGIN_ATTEMPTS) return;
-
-            const input = document.getElementById('input-code');
-            const btn = document.getElementById('btn-login');
-            const err = document.getElementById('msg-error');
-            
-            userCode = input.value.trim();
-            if(userCode.length < 6) { err.innerText = "Код должен содержать 6 цифр"; err.classList.remove('hidden'); return; }
-
-            btn.disabled = true; btn.innerHTML = '<span class="loader"></span>'; err.classList.add('hidden');
-
-            try {
-                const res = await fetch(`${API_URL}?code=${userCode}`);
-                const data = await res.json();
-                
-                if(data.success) {
-                    // Сброс попыток при успехе
-                    localStorage.setItem('p6_attempts', 0);
-                    showScreen('view-rules'); 
-                } else {
-                    // Ошибка входа
-                    loginAttempts++;
-                    localStorage.setItem('p6_attempts', loginAttempts);
-                    
-                    err.innerText = data.message || "Ошибка доступа"; 
-                    err.classList.remove('hidden'); 
-                    btn.disabled = false; btn.innerText = "Войти";
-                    
-                    document.getElementById('attempts-left').innerText = `Попыток осталось: ${MAX_LOGIN_ATTEMPTS - loginAttempts}`;
-                    document.getElementById('attempts-left').classList.remove('hidden');
-                    
-                    checkLockout();
-                }
-            } catch(e) { 
-                err.innerText = "Ошибка сети"; err.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Войти"; 
-            }
-        }
-
-        function startLevel(lvl) {
-            currentLevel = lvl; currentIndex = 0; blockScore = 0; isAnswerLocked = false;
-            const start = (lvl - 1) * QUESTIONS_PER_BLOCK;
-            const end = start + QUESTIONS_PER_BLOCK;
-            if(typeof quizData === 'undefined' || quizData.length < end) { alert("Ошибка данных"); return; }
-            currentQuestions = quizData.slice(start, end);
-            document.getElementById('ui-level').innerText = lvl;
-            renderBubbles(); showScreen('view-quiz');
-            startTimer(TIME_LIMIT_MIN * 60); renderQuestion();
-        }
-
-        function renderQuestion() {
-            const q = currentQuestions[currentIndex];
-            isAnswerLocked = false;
-            document.getElementById('ui-qnum').innerText = currentIndex + 1;
-            updateBubbles();
-            document.getElementById('ui-question').innerText = q.q;
-            document.getElementById('ui-feedback').classList.add('hidden');
-            const list = document.getElementById('ui-options'); list.innerHTML = '';
-            
-            let opts = q.opt.map((txt, idx) => ({ txt, isCorrect: idx === q.c }));
-            for(let i = opts.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i+1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
-
-            opts.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-5 rounded-xl border-2 border-slate-100 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all font-medium text-slate-700 mb-2 active:scale-[0.99]";
-                btn.innerText = opt.txt;
-                btn.onclick = () => onAnswer(opt.isCorrect, btn, q);
-                list.appendChild(btn);
-            });
-        }
-
-        function onAnswer(isCorrect, btn, qData) {
-            if(isAnswerLocked) return;
-            isAnswerLocked = true;
-            const bubble = document.getElementById(`bubble-${currentIndex}`);
-            if(isCorrect) {
-                blockScore++; totalScore++;
-                btn.className = "w-full text-left p-5 rounded-xl border-2 border-green-500 bg-green-50 text-green-700 font-medium mb-2 transition-all";
-                bubble.classList.add('bg-green-500', 'correct'); bubble.classList.remove('active', 'bg-blue-500');
-                setTimeout(nextQuestionLogic, 1200);
-            } else {
-                if(qData.t) wrongTopics.push(qData.t);
-                btn.className = "w-full text-left p-5 rounded-xl border-2 border-red-500 bg-red-50 text-red-700 font-medium mb-2 transition-all";
-                bubble.classList.add('bg-red-500', 'wrong'); bubble.classList.remove('active', 'bg-blue-500');
-                const fb = document.getElementById('ui-feedback');
-                document.getElementById('ui-explanation').innerText = qData.exp;
-                fb.classList.remove('hidden');
-                fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                sendProgressData('progress');
-            }
-        }
-
-        function nextQuestionManually() { nextQuestionLogic(); }
-        function nextQuestionLogic() {
-            currentIndex++;
-            if(currentIndex < QUESTIONS_PER_BLOCK) { renderQuestion(); } else { finishLevel(); }
-        }
-
-        async function finishLevel(isTimeout = false) {
-            clearInterval(timer);
-            const percent = Math.round((blockScore / QUESTIONS_PER_BLOCK) * 100);
-            await sendProgressData('save_level', percent);
-            showScreen('view-level-result');
-            document.getElementById('lvl-score').innerText = percent + '%';
-            const btnNext = document.getElementById('btn-next-lvl');
-            const title = document.getElementById('lvl-title');
-            const msg = document.getElementById('lvl-msg');
-            const icon = document.getElementById('lvl-icon');
-
-            if(percent >= PASS_PERCENT) {
-                icon.innerHTML = '🏆'; title.innerText = isTimeout ? "Время вышло (Зачет)" : "Блок сдан!";
-                title.className = "text-2xl font-bold mb-2 text-green-600";
-                if(currentLevel < BLOCKS) { msg.innerText = "Отлично. Доступ открыт."; btnNext.classList.remove('hidden'); }
-                else { msg.innerText = "Поздравляем! Все блоки пройдены."; btnNext.classList.add('hidden'); }
-            } else {
-                icon.innerHTML = '💔'; title.innerText = "Не сдан"; title.className = "text-2xl font-bold mb-2 text-red-600";
-                msg.innerText = `Нужно ${PASS_PERCENT}%.`; btnNext.classList.add('hidden');
-            }
-        }
-
-        function startNextLevel() { startLevel(currentLevel + 1); }
-        async function finishTest() {
-            await sendProgressData('finish_test');
-            showScreen('view-final');
-            document.getElementById('final-code').innerText = userCode;
-            document.getElementById('final-date').innerText = new Date().toLocaleDateString();
-            document.getElementById('final-score').innerText = `${totalScore} / 100`;
-            if(wrongTopics.length > 0) {
-                const list = document.getElementById('topic-list');
-                document.getElementById('final-recommendations').classList.remove('hidden');
-                list.innerHTML = '';
-                let counts = {}; wrongTopics.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
-                Object.keys(counts).sort((a,b) => counts[b] - counts[a]).forEach(topic => {
-                    let li = document.createElement('li');
-                    li.className = "flex justify-between border-b border-slate-200 pb-1 last:border-0";
-                    li.innerHTML = `<span>${topic}</span> <span class="font-bold text-red-500">${counts[topic]} ош.</span>`;
-                    list.appendChild(li);
-                });
-            }
-        }
-
-        function showScreen(id) {
-            ['view-login', 'view-rules', 'view-quiz', 'view-level-result', 'view-final'].forEach(s => document.getElementById(s).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-        function renderBubbles() {
-            const c = document.getElementById('ui-bubbles'); c.innerHTML = '';
-            for(let i=0; i<QUESTIONS_PER_BLOCK; i++) { let d = document.createElement('div'); d.className = 'bubble bg-slate-200'; d.id = `bubble-${i}`; c.appendChild(d); }
-        }
-        function updateBubbles() {
-            for(let i=0; i<QUESTIONS_PER_BLOCK; i++) {
-                let el = document.getElementById(`bubble-${i}`);
-                if(i === currentIndex) { el.classList.remove('bg-slate-200'); el.classList.add('active', 'bg-blue-500'); }
-                else if (i > currentIndex) { el.classList.remove('active', 'bg-blue-500'); el.classList.add('bg-slate-200'); }
-            }
-        }
-        function startTimer(sec) {
-            clearInterval(timer); timeLeft = sec; updateTimerDisplay();
-            timer = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft <= 0) finishLevel(true); }, 1000);
-        }
-        function updateTimerDisplay() {
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0'); let s = (timeLeft % 60).toString().padStart(2, '0');
-            let el = document.getElementById('ui-timer'); el.innerText = `${m}:${s}`;
-            if(timeLeft < 60) el.parentElement.classList.add('timer-warn'); else el.parentElement.classList.remove('timer-warn');
-        }
-        async function sendProgressData(action, scoreVal = 0) {
-            let p = { action: action, code: user
+function responseJSON(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
