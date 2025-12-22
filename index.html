@@ -137,15 +137,14 @@
         // --- КОНФИГУРАЦИЯ ---
         const BLOCKS = 4;
         const QUESTIONS_PER_BLOCK = 25;
-        const TIME_LIMIT_MIN = 10; // ЖЕСТКО 10 МИНУТ
+        // ИСПРАВЛЕНО ЗДЕСЬ: Таймер в JS
+        const TIME_LIMIT_MIN = 10; 
         const PASS_PERCENT = 60;
         const MAX_LOGIN_ATTEMPTS = 3;
 
-        // --- ПЕРЕМЕННЫЕ ---
         let userCode = "", currentLevel = 1, currentQuestions = [], currentIndex = 0, blockScore = 0, totalScore = 0, wrongTopics = [];
         let timer = null, timeLeft = 0, isAnswerLocked = false;
         
-        // Счетчик попыток (хранится в браузере)
         let loginAttempts = parseInt(localStorage.getItem('p6_attempts')) || 0;
 
         window.onload = function() { checkLockout(); }
@@ -178,11 +177,9 @@
                 const data = await res.json();
                 
                 if(data.success) {
-                    // Успешный вход -> сброс счетчика
                     localStorage.setItem('p6_attempts', 0);
                     showScreen('view-rules'); 
                 } else {
-                    // Ошибка -> увеличиваем счетчик
                     loginAttempts++;
                     localStorage.setItem('p6_attempts', loginAttempts);
                     
@@ -215,7 +212,10 @@
             currentQuestions = quizData.slice(start, end);
             document.getElementById('ui-level').innerText = lvl;
             renderBubbles(); showScreen('view-quiz');
-            startTimer(TIME_LIMIT_MIN * 60); renderQuestion();
+            
+            // Запуск таймера (10 минут)
+            startTimer(TIME_LIMIT_MIN * 60); 
+            renderQuestion();
         }
 
         function renderQuestion() {
@@ -247,7 +247,7 @@
                 blockScore++; totalScore++;
                 btn.className = "w-full text-left p-5 rounded-xl border-2 border-green-500 bg-green-50 text-green-700 font-medium mb-2 transition-all";
                 bubble.classList.add('bg-green-500', 'correct'); bubble.classList.remove('active', 'bg-blue-500');
-                setTimeout(nextQuestionLogic, 1000); // Автопереход через 1 сек (Зеленый)
+                setTimeout(nextQuestionLogic, 1000);
             } else {
                 if(qData.t) wrongTopics.push(qData.t);
                 btn.className = "w-full text-left p-5 rounded-xl border-2 border-red-500 bg-red-50 text-red-700 font-medium mb-2 transition-all";
@@ -256,7 +256,6 @@
                 document.getElementById('ui-explanation').innerText = qData.exp;
                 fb.classList.remove('hidden');
                 fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // При ошибке автоперехода НЕТ (ждем клик Далее)
                 sendProgressData('progress');
             }
         }
