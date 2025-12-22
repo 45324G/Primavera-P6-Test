@@ -11,10 +11,8 @@
         body { font-family: 'Inter', sans-serif; }
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Анимация пульсации таймера, когда мало времени */
         .timer-warn { color: #ef4444; animation: pulse 1s infinite; font-weight: 800; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        /* Спиннер загрузки */
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #2563eb; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -31,14 +29,11 @@
         </div>
         <h2 class="text-2xl font-bold mb-2 text-slate-900">Primavera Expert</h2>
         <p class="text-slate-500 mb-6 text-sm">Система аттестации персонала.<br>4 уровня сложности.</p>
-        
         <div class="relative mb-4">
             <input type="tel" id="access-code" maxlength="6" placeholder="• • • • • •" 
                    class="w-full text-center text-3xl tracking-[0.5em] font-bold py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors">
         </div>
-        
         <p id="login-error" class="text-red-500 text-xs mb-4 font-bold hidden bg-red-50 p-2 rounded"></p>
-        
         <button onclick="attemptLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-200">
             Войти
         </button>
@@ -59,13 +54,11 @@
                 <div id="ui-progress" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
             </div>
         </header>
-
         <main class="flex-grow flex flex-col items-center justify-start sm:justify-center p-4 w-full">
             <div class="w-full max-w-2xl fade-in pb-10">
                 <div class="bg-white sm:rounded-2xl sm:shadow-lg sm:border border-slate-200 p-5 sm:p-8 relative">
                     <h3 id="question-text" class="text-lg sm:text-2xl font-bold text-slate-900 mb-8 leading-snug">Загрузка...</h3>
-                    <div id="options-list" class="space-y-3">
-                        </div>
+                    <div id="options-list" class="space-y-3"></div>
                 </div>
             </div>
         </main>
@@ -74,13 +67,9 @@
     <div id="screen-level-result" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 fade-in">
         <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-md w-full relative">
             <div id="level-icon" class="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl shadow-sm"></div>
-            
             <h2 id="level-title" class="text-2xl font-bold mb-2 text-slate-800">Уровень завершен</h2>
-            
             <div class="text-6xl font-black my-4 text-slate-900 tracking-tighter" id="level-score">0%</div>
-            
             <p id="level-msg" class="text-slate-500 mb-8 font-medium leading-relaxed"></p>
-            
             <div class="flex flex-col gap-3">
                 <button id="btn-next-level" onclick="startNextLevel()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-200 transform transition-all hover:scale-[1.02]">
                     Следующий уровень <i class="fa-solid fa-arrow-right ml-2"></i>
@@ -92,25 +81,26 @@
         </div>
     </div>
 
-    <div id="screen-final" class="hidden w-full max-w-md bg-white p-10 rounded-3xl shadow-xl text-center fade-in fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div class="mb-6 text-green-500 text-6xl drop-shadow-sm"><i class="fa-solid fa-circle-check"></i></div>
-        <h2 class="text-3xl font-bold mb-4 text-slate-900">Результаты сохранены</h2>
-        <p class="text-slate-500 mb-6">Ваш прогресс записан в базу данных.</p>
-        <div class="bg-slate-50 p-4 rounded-xl text-xs text-slate-400 font-mono break-all">
-            SESSION: <span id="final-code-display"></span>
+    <div id="screen-final" class="hidden w-full max-w-lg bg-white p-8 rounded-3xl shadow-xl text-center fade-in fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto">
+        <div class="mb-4 text-green-500 text-5xl"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 class="text-2xl font-bold mb-2 text-slate-900">Результаты сохранены</h2>
+        <div class="bg-slate-50 p-3 rounded-lg text-xs text-slate-400 font-mono mb-6">SESSION: <span id="final-code-display"></span></div>
+        
+        <div id="recommendation-block" class="text-left hidden border-t border-slate-100 pt-4">
+            <h3 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider"><i class="fa-solid fa-book-open text-blue-500 mr-2"></i> Рекомендуемые темы:</h3>
+            <ul id="topic-list" class="space-y-2 text-sm text-slate-600"></ul>
         </div>
+        
         <p class="mt-6 text-sm text-slate-400">Вы можете закрыть это окно.</p>
     </div>
 
     <script src="questions.js"></script>
 
     <script>
-        // --- НАСТРОЙКИ ---
-        const QUESTIONS_PER_LEVEL = 25; // Количество вопросов на уровень
-        const LEVEL_TIME_MINUTES = 15;  // Время на уровень
-        const PASS_THRESHOLD = 60;      // Проходной балл (проценты)
+        const QUESTIONS_PER_LEVEL = 25; 
+        const LEVEL_TIME_MINUTES = 15;  
+        const PASS_THRESHOLD = 60;      
 
-        // --- ПЕРЕМЕННЫЕ ---
         let currentLevel = 1;
         let currentLevelQuestions = [];
         let currentQIndex = 0;
@@ -119,129 +109,75 @@
         let timerInterval;
         let timeRemaining = 0;
         let isAnswered = false;
+        
+        // Сюда будем собирать темы ошибок
+        let wrongTopics = []; 
 
-        // --- ВХОД (LOGIN) ---
         async function attemptLogin() {
             const input = document.getElementById('access-code');
             const btn = document.getElementById('btn-login');
             const err = document.getElementById('login-error');
-            
             userCode = input.value.trim();
-            if (userCode.length < 6) {
-                err.innerText = "Код должен состоять из 6 цифр";
-                err.classList.remove('hidden');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loader mx-auto"></div>';
-            err.classList.add('hidden');
-
+            if (userCode.length < 6) { err.innerText = "Код должен состоять из 6 цифр"; err.classList.remove('hidden'); return; }
+            btn.disabled = true; btn.innerHTML = '<div class="loader mx-auto"></div>'; err.classList.add('hidden');
             try {
-                // Запрос к Google Script (GET)
                 const res = await fetch(`${API_URL}?code=${userCode}`);
                 const data = await res.json();
-                
                 if (data.success) {
                     document.getElementById('screen-login').classList.add('hidden');
                     startLevel(1);
                 } else {
-                    err.innerText = data.message || "Ошибка доступа";
-                    err.classList.remove('hidden');
-                    btn.disabled = false;
-                    btn.innerHTML = 'Войти';
+                    err.innerText = data.message || "Ошибка доступа"; err.classList.remove('hidden'); btn.disabled = false; btn.innerHTML = 'Войти';
                 }
             } catch (e) {
-                console.error(e);
-                err.innerText = "Ошибка соединения с сервером";
-                err.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerHTML = 'Войти';
+                console.error(e); err.innerText = "Ошибка соединения"; err.classList.remove('hidden'); btn.disabled = false; btn.innerHTML = 'Войти';
             }
         }
 
-        // --- ЗАПУСК УРОВНЯ ---
         function startLevel(lvl) {
-            currentLevel = lvl;
-            currentQIndex = 0;
-            levelScoreRaw = 0;
-            
-            // Нарезаем вопросы из общего массива quizData (100 шт)
-            // Ур 1: 0-25, Ур 2: 25-50, Ур 3: 50-75, Ур 4: 75-100
+            currentLevel = lvl; currentQIndex = 0; levelScoreRaw = 0;
             const startIdx = (lvl - 1) * QUESTIONS_PER_LEVEL;
             const endIdx = startIdx + QUESTIONS_PER_LEVEL;
-
-            if (typeof quizData === 'undefined' || quizData.length < endIdx) {
-                alert("Ошибка: Недостаточно вопросов в файле questions.js");
-                return;
-            }
-
+            if (typeof quizData === 'undefined' || quizData.length < endIdx) { alert("Ошибка данных вопросов"); return; }
             currentLevelQuestions = quizData.slice(startIdx, endIdx);
-
-            // Скрываем модалки, показываем тест
             document.getElementById('screen-level-result').classList.add('hidden');
             document.getElementById('screen-quiz').classList.remove('hidden');
             document.getElementById('ui-level').innerText = lvl;
-            
-            // Запускаем таймер
             startTimer(LEVEL_TIME_MINUTES * 60);
-            
-            // Грузим первый вопрос
             loadQuestion();
         }
 
-        // --- ЗАГРУЗКА ВОПРОСА (С ПЕРЕМЕШИВАНИЕМ) ---
         function loadQuestion() {
             isAnswered = false;
             const qData = currentLevelQuestions[currentQIndex];
-
-            // Обновляем UI счетчики
             document.getElementById('ui-q-num').innerText = currentQIndex + 1;
             document.getElementById('ui-progress').style.width = `${((currentQIndex) / QUESTIONS_PER_LEVEL) * 100}%`;
             document.getElementById('question-text').innerText = qData.q;
-
             const list = document.getElementById('options-list');
             list.innerHTML = '';
-
-            // 1. Создаем массив объектов ответов, чтобы привязать текст к правильности
-            // qData.c - это индекс правильного ответа в исходном массиве (0,1,2 или 3)
-            let optionsObj = qData.opt.map((text, idx) => {
-                return { 
-                    text: text, 
-                    isCorrect: (idx === qData.c) 
-                };
-            });
-
-            // 2. Перемешиваем ответы (Алгоритм Фишера-Йетса)
-            // Это решает проблему "всегда нажимай B"
+            
+            // Перемешивание с сохранением правильности
+            let optionsObj = qData.opt.map((text, idx) => { return { text: text, isCorrect: (idx === qData.c) }; });
             for (let i = optionsObj.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [optionsObj[i], optionsObj[j]] = [optionsObj[j], optionsObj[i]];
             }
 
-            // 3. Рендерим кнопки
             optionsObj.forEach((opt, index) => {
                 const btn = document.createElement('button');
-                // Стили кнопки
                 btn.className = `w-full text-left p-4 sm:p-5 rounded-xl border-2 border-slate-100 bg-white hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 flex items-start gap-4 group active:scale-[0.98]`;
-                
-                // Буква (A, B, C, D) чисто визуальная, не привязана к исходному порядку
                 btn.innerHTML = `
                     <span class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold mt-0.5 group-hover:bg-blue-500 group-hover:text-white transition-colors text-sm">${['A','B','C','D'][index]}</span>
                     <span class="text-slate-700 font-medium leading-snug text-base sm:text-lg">${opt.text}</span>
                 `;
-                
-                // Передаем true/false (правильный ли этот конкретный вариант)
-                btn.onclick = () => handleAnswer(opt.isCorrect, btn);
+                btn.onclick = () => handleAnswer(opt.isCorrect, btn, qData);
                 list.appendChild(btn);
             });
         }
 
-        function handleAnswer(isCorrect, btn) {
+        function handleAnswer(isCorrect, btn, qData) {
             if (isAnswered) return;
             isAnswered = true;
-
-            // Визуализация
             if (isCorrect) {
                 levelScoreRaw++;
                 btn.className = btn.className.replace('border-slate-100', 'border-green-500 bg-green-50');
@@ -249,32 +185,24 @@
             } else {
                 btn.className = btn.className.replace('border-slate-100', 'border-red-500 bg-red-50');
                 btn.querySelector('span:first-child').className = 'flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold mt-0.5 text-sm';
+                // Сохраняем тему ошибки
+                if(qData.t) wrongTopics.push(qData.t);
             }
-
-            // Авто-переход через 0.8 сек
             setTimeout(() => {
                 currentQIndex++;
-                if (currentQIndex < QUESTIONS_PER_LEVEL) {
-                    loadQuestion();
-                } else {
-                    endLevel();
-                }
+                if (currentQIndex < QUESTIONS_PER_LEVEL) loadQuestion();
+                else endLevel();
             }, 800);
         }
 
-        // --- ТАЙМЕР ---
         function startTimer(seconds) {
             clearInterval(timerInterval);
             timeRemaining = seconds;
             updateTimerUI();
-            
             timerInterval = setInterval(() => {
                 timeRemaining--;
                 updateTimerUI();
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    endLevel(true); // Время вышло
-                }
+                if (timeRemaining <= 0) { clearInterval(timerInterval); endLevel(true); }
             }, 1000);
         }
 
@@ -283,89 +211,60 @@
             const s = (timeRemaining % 60).toString().padStart(2, '0');
             const el = document.getElementById('ui-timer');
             const container = document.getElementById('ui-timer-container');
-            
             el.innerText = `${m}:${s}`;
-            
-            // Если осталось меньше минуты - красная пульсация
-            if (timeRemaining < 60) {
-                container.classList.add('timer-warn', 'text-red-600', 'bg-red-50');
-            } else {
-                container.classList.remove('timer-warn', 'text-red-600', 'bg-red-50');
-            }
+            if (timeRemaining < 60) container.classList.add('timer-warn', 'text-red-600', 'bg-red-50');
+            else container.classList.remove('timer-warn', 'text-red-600', 'bg-red-50');
         }
 
-        // --- ЗАВЕРШЕНИЕ УРОВНЯ ---
         async function endLevel(timeOut = false) {
             clearInterval(timerInterval);
             document.getElementById('screen-quiz').classList.add('hidden');
-            
-            // Считаем проценты
             const percentage = Math.round((levelScoreRaw / QUESTIONS_PER_LEVEL) * 100);
-            
-            // Отправляем результат уровня на сервер (фоном)
             saveProgress(currentLevel, percentage);
-
-            // Настраиваем модальное окно результата
             const modal = document.getElementById('screen-level-result');
             const icon = document.getElementById('level-icon');
             const title = document.getElementById('level-title');
             const msg = document.getElementById('level-msg');
             const btnNext = document.getElementById('btn-next-level');
-
             modal.classList.remove('hidden');
             document.getElementById('level-score').innerText = percentage + '%';
 
             if (percentage >= PASS_THRESHOLD) {
-                // УСПЕХ
                 icon.className = 'mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl shadow-sm bg-green-100 text-green-600';
                 icon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
-                title.innerText = timeOut ? "Время вышло (но зачет)" : `Уровень ${currentLevel} пройден!`;
-                
+                title.innerText = timeOut ? "Время вышло (зачет)" : `Уровень ${currentLevel} пройден!`;
                 if (currentLevel < 4) {
-                    msg.innerText = `Вы набрали больше ${PASS_THRESHOLD}%. Доступ к уровню ${currentLevel + 1} открыт.`;
+                    msg.innerText = `Доступ к уровню ${currentLevel + 1} открыт.`;
                     btnNext.classList.remove('hidden');
                 } else {
-                    msg.innerText = "Поздравляем! Вы успешно прошли все уровни аттестации.";
+                    msg.innerText = "Поздравляем! Вы прошли аттестацию.";
                     btnNext.classList.add('hidden');
                 }
             } else {
-                // ПРОВАЛ
                 icon.className = 'mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl shadow-sm bg-red-100 text-red-600';
                 icon.innerHTML = '<i class="fa-solid fa-heart-crack"></i>';
-                title.innerText = timeOut ? "Время вышло!" : "Уровень не сдан";
-                msg.innerText = `Для прохода дальше нужно набрать минимум ${PASS_THRESHOLD}%.`;
+                title.innerText = timeOut ? "Время вышло!" : "Не сдан";
+                msg.innerText = `Минимум ${PASS_THRESHOLD}%.`;
                 btnNext.classList.add('hidden');
             }
         }
 
-        // --- СОХРАНЕНИЕ НА СЕРВЕР ---
         async function saveProgress(lvl, score) {
             try {
                 await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
+                    method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ 
-                        action: 'save_level', 
-                        code: userCode, 
-                        level: lvl,
-                        score: score 
-                    })
+                    body: JSON.stringify({ action: 'save_level', code: userCode, level: lvl, score: score })
                 });
             } catch (e) { console.error("Save error", e); }
         }
 
-        function startNextLevel() {
-            startLevel(currentLevel + 1);
-        }
+        function startNextLevel() { startLevel(currentLevel + 1); }
 
-        // --- ПОЛНЫЙ ФИНИШ ---
         async function finishTestFull() {
-            // Отправляем сигнал "Finished" чтобы закрыть код навсегда
             try {
                 await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
+                    method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'finish_test', code: userCode })
                 });
@@ -374,6 +273,30 @@
             document.getElementById('screen-level-result').classList.add('hidden');
             document.getElementById('screen-final').classList.remove('hidden');
             document.getElementById('final-code-display').innerText = userCode;
+            
+            // Генерация списка рекомендаций
+            generateRecommendations();
+        }
+
+        function generateRecommendations() {
+            if(wrongTopics.length === 0) return;
+            
+            const list = document.getElementById('topic-list');
+            document.getElementById('recommendation-block').classList.remove('hidden');
+            
+            // Считаем частоту ошибок
+            const counts = {};
+            wrongTopics.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
+            
+            // Сортируем: сверху те, где больше всего ошибок
+            const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+            
+            // Выводим топ-5
+            sorted.slice(0, 5).forEach(topic => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold mr-2">${counts[topic]} ош.</span> ${topic}`;
+                list.appendChild(li);
+            });
         }
     </script>
 </body>
