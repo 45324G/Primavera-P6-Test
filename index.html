@@ -9,21 +9,17 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Кругляшки прогресса */
+        /* Кругляшки */
         .bubble { width: 12px; height: 12px; background-color: #e2e8f0; border-radius: 50%; transition: all 0.3s; }
         .bubble.active { background-color: #3b82f6; transform: scale(1.4); box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
         .bubble.correct { background-color: #22c55e; }
         .bubble.wrong { background-color: #ef4444; }
-
-        /* Таймер */
+        /* Анимация таймера */
         .timer-container { font-variant-numeric: tabular-nums; }
         .timer-warn { color: #dc2626; animation: pulse 1s infinite; }
         @keyframes pulse { 50% { opacity: 0.5; } }
-
         /* Лоадер */
         .loader { width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -41,58 +37,32 @@
         </div>
         <h1 class="text-2xl font-bold text-slate-900 mb-2">Тест на знание<br>Oracle Primavera P6</h1>
         <p class="text-slate-500 mb-6 text-sm">Введите код доступа для начала сессии.</p>
-        
         <input type="tel" id="input-code" maxlength="6" placeholder="• • • • • •" 
                class="w-full text-center text-3xl tracking-[0.5em] font-bold py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none mb-4 transition-colors">
-        
         <p id="msg-error" class="text-red-500 text-sm mb-4 hidden font-semibold"></p>
-        
-        <button onclick="doLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-100">
-            Войти
-        </button>
+        <button onclick="doLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg">Войти</button>
     </div>
 
     <div id="view-rules" class="hidden max-w-md w-full bg-white p-8 rounded-2xl shadow-xl fade-in">
         <h2 class="text-2xl font-bold mb-6 text-slate-900">Правила тестирования</h2>
-        
         <div class="space-y-5 mb-8">
             <div class="flex items-start gap-4">
                 <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-layer-group"></i></div>
-                <div>
-                    <h3 class="font-bold text-slate-800">4 Уровня</h3>
-                    <p class="text-sm text-slate-500">Сложность растет от "Новичка" до "Эксперта".</p>
-                </div>
-            </div>
-            <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-list-check"></i></div>
-                <div>
-                    <h3 class="font-bold text-slate-800">25 Вопросов в блоке</h3>
-                    <p class="text-sm text-slate-500">Всего 100 вопросов.</p>
-                </div>
+                <div><h3 class="font-bold text-slate-800">4 Уровня</h3><p class="text-sm text-slate-500">Сложность растет от "Новичка" до "Эксперта".</p></div>
             </div>
             <div class="flex items-start gap-4">
                 <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-stopwatch"></i></div>
-                <div>
-                    <h3 class="font-bold text-slate-800">15 Минут</h3>
-                    <p class="text-sm text-slate-500">Лимит времени на каждый блок.</p>
-                </div>
+                <div><h3 class="font-bold text-slate-800">10 Минут</h3><p class="text-sm text-slate-500">Лимит времени на каждый блок.</p></div>
             </div>
             <div class="flex items-start gap-4">
                 <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-lock"></i></div>
-                <div>
-                    <h3 class="font-bold text-slate-800">Проходной балл 60%</h3>
-                    <p class="text-sm text-slate-500">Доступ к следующему уровню открывается только при успешной сдаче текущего.</p>
-                </div>
+                <div><h3 class="font-bold text-slate-800">Проходной балл 60%</h3><p class="text-sm text-slate-500">Для перехода на следующий уровень.</p></div>
             </div>
         </div>
-
-        <button onclick="startLevel(1)" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-all">
-            Начать Блок 1
-        </button>
+        <button onclick="startLevel(1)" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-all">Начать Блок 1</button>
     </div>
 
     <div id="view-quiz" class="hidden w-full max-w-3xl flex flex-col min-h-screen bg-white sm:bg-transparent">
-        
         <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm sm:rounded-b-2xl">
             <div class="max-w-3xl mx-auto px-4 py-4">
                 <div class="flex justify-between items-center mb-4">
@@ -101,35 +71,25 @@
                         <span class="text-sm font-semibold text-slate-400">Вопрос <span id="ui-qnum">1</span>/25</span>
                     </div>
                     <div class="timer-container font-mono text-xl font-bold text-slate-700 flex items-center gap-2">
-                        <i class="fa-regular fa-clock text-slate-400 text-sm"></i>
-                        <span id="ui-timer">15:00</span>
+                        <i class="fa-regular fa-clock text-slate-400 text-sm"></i><span id="ui-timer">10:00</span>
                     </div>
                 </div>
-                
-                <div id="ui-bubbles" class="flex justify-between gap-1">
-                    </div>
+                <div id="ui-bubbles" class="flex justify-between gap-1"></div>
             </div>
         </header>
 
         <main class="flex-grow flex flex-col items-center justify-start sm:justify-center p-4 w-full pb-20">
             <div class="w-full max-w-2xl bg-white sm:rounded-2xl sm:shadow-lg sm:border border-slate-200 p-6 sm:p-10 fade-in">
-                
                 <h3 id="ui-question" class="text-xl sm:text-2xl font-bold text-slate-900 mb-8 leading-snug">Загрузка...</h3>
-                
                 <div id="ui-options" class="space-y-3"></div>
-
+                
                 <div id="ui-feedback" class="hidden mt-8 pt-6 border-t border-slate-100 fade-in">
                     <div class="bg-red-50 border border-red-100 rounded-xl p-5 mb-4">
-                        <div class="flex items-center gap-2 text-red-600 font-bold mb-2">
-                            <i class="fa-solid fa-circle-exclamation"></i> Ошибка
-                        </div>
+                        <div class="flex items-center gap-2 text-red-600 font-bold mb-2"><i class="fa-solid fa-circle-exclamation"></i> Ошибка</div>
                         <p id="ui-explanation" class="text-slate-700 leading-relaxed"></p>
                     </div>
-                    <button onclick="nextQuestionManually()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-all">
-                        Далее <i class="fa-solid fa-arrow-right ml-2"></i>
-                    </button>
+                    <button onclick="nextQuestionManually()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-all">Далее <i class="fa-solid fa-arrow-right ml-2"></i></button>
                 </div>
-
             </div>
         </main>
     </div>
@@ -140,14 +100,9 @@
             <h2 id="lvl-title" class="text-2xl font-bold mb-2 text-slate-900">...</h2>
             <div class="text-6xl font-black my-6 text-slate-800" id="lvl-score">0%</div>
             <p id="lvl-msg" class="text-slate-500 mb-8"></p>
-            
             <div class="flex flex-col gap-3">
-                <button id="btn-next-lvl" onclick="startNextLevel()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-200">
-                    Следующий уровень
-                </button>
-                <button onclick="finishTest()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl">
-                    Завершить и сохранить
-                </button>
+                <button id="btn-next-lvl" onclick="startNextLevel()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg">Следующий уровень</button>
+                <button onclick="finishTest()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl">Завершить</button>
             </div>
         </div>
     </div>
@@ -155,37 +110,20 @@
     <div id="view-final" class="hidden bg-white min-h-screen p-8 max-w-3xl mx-auto fade-in">
         <div class="text-center mb-10">
             <div class="inline-block p-4 bg-green-100 rounded-full text-green-600 text-4xl mb-4"><i class="fa-solid fa-check"></i></div>
-            <h2 class="text-3xl font-bold text-slate-900">Результаты аттестации</h2>
-            <p class="text-slate-500">Primavera P6 Knowledge Test</p>
+            <h2 class="text-3xl font-bold text-slate-900">Результаты</h2>
         </div>
-
         <div class="grid grid-cols-2 gap-6 border-b border-slate-200 pb-8 mb-8">
-            <div>
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Сотрудник (ID)</span>
-                <div class="text-xl font-mono font-bold text-slate-800" id="final-code">---</div>
-            </div>
-            <div>
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Дата</span>
-                <div class="text-xl font-bold text-slate-800" id="final-date">---</div>
-            </div>
-            <div class="col-span-2">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Общий результат</span>
-                <div class="text-3xl font-black text-blue-600" id="final-score">0 / 100</div>
-            </div>
+            <div><span class="text-xs font-bold text-slate-400 uppercase">Сотрудник</span><div class="text-xl font-mono font-bold text-slate-800" id="final-code">---</div></div>
+            <div><span class="text-xs font-bold text-slate-400 uppercase">Дата</span><div class="text-xl font-bold text-slate-800" id="final-date">---</div></div>
+            <div class="col-span-2"><span class="text-xs font-bold text-slate-400 uppercase">Итог</span><div class="text-3xl font-black text-blue-600" id="final-score">0 / 100</div></div>
         </div>
-
         <div id="final-recommendations" class="hidden">
-            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-l-4 border-red-500 pl-3">Темы для изучения</h3>
+            <h3 class="text-sm font-bold text-slate-900 uppercase mb-4 border-l-4 border-red-500 pl-3">Темы для изучения</h3>
             <ul id="topic-list" class="space-y-2 text-sm text-slate-600 bg-slate-50 p-6 rounded-xl border border-slate-100"></ul>
         </div>
-
         <div class="mt-10 flex gap-4 print:hidden">
-            <button onclick="window.print()" class="flex-1 bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800">
-                <i class="fa-solid fa-print mr-2"></i> Распечатать / PDF
-            </button>
-            <button onclick="location.reload()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl">
-                Закрыть
-            </button>
+            <button onclick="window.print()" class="flex-1 bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800"><i class="fa-solid fa-print mr-2"></i> PDF / Печать</button>
+            <button onclick="location.reload()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl">Закрыть</button>
         </div>
     </div>
 
@@ -195,114 +133,49 @@
         // CONFIG
         const BLOCKS = 4;
         const QUESTIONS_PER_BLOCK = 25;
-        const TIME_LIMIT_MIN = 15;
+        const TIME_LIMIT_MIN = 10; // Сократил до 10 минут
         const PASS_PERCENT = 60;
 
-        // STATE
-        let userCode = "";
-        let currentLevel = 1;
-        let currentQuestions = [];
-        let currentIndex = 0; // 0..24
-        let blockScore = 0;   // Правильных в блоке
-        let totalScore = 0;   // Общий счет
-        let wrongTopics = []; // Ошибки
-        
-        let timer = null;
-        let timeLeft = 0;
-        let isAnswerLocked = false; // Блокировка нажатий
+        let userCode = "", currentLevel = 1, currentQuestions = [], currentIndex = 0, blockScore = 0, totalScore = 0, wrongTopics = [];
+        let timer = null, timeLeft = 0, isAnswerLocked = false;
 
-        // --- 1. LOGIN ---
         async function doLogin() {
             const input = document.getElementById('input-code');
             const btn = document.getElementById('btn-login');
             const err = document.getElementById('msg-error');
-            
             userCode = input.value.trim();
-            if(userCode.length < 6) {
-                err.innerText = "Код должен содержать 6 цифр";
-                err.classList.remove('hidden');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span>';
-            err.classList.add('hidden');
-
+            if(userCode.length < 6) { err.innerText = "Код должен содержать 6 цифр"; err.classList.remove('hidden'); return; }
+            btn.disabled = true; btn.innerHTML = '<span class="loader"></span>'; err.classList.add('hidden');
             try {
-                // Проверяем код и ставим статус STARTED
                 const res = await fetch(`${API_URL}?code=${userCode}`);
                 const data = await res.json();
-                
-                if(data.success) {
-                    showScreen('view-rules'); // Переход к правилам
-                } else {
-                    err.innerText = data.message || "Ошибка доступа";
-                    err.classList.remove('hidden');
-                    btn.disabled = false; btn.innerText = "Войти";
-                }
-            } catch(e) {
-                console.error(e);
-                err.innerText = "Нет связи с сервером. Проверьте интернет.";
-                err.classList.remove('hidden');
-                btn.disabled = false; btn.innerText = "Войти";
-            }
+                if(data.success) { showScreen('view-rules'); } 
+                else { err.innerText = data.message || "Ошибка доступа"; err.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Войти"; }
+            } catch(e) { err.innerText = "Ошибка сети"; err.classList.remove('hidden'); btn.disabled = false; btn.innerText = "Войти"; }
         }
 
-        // --- 2. START LEVEL ---
         function startLevel(lvl) {
-            currentLevel = lvl;
-            currentIndex = 0;
-            blockScore = 0;
-            isAnswerLocked = false;
-
-            // Нарезка вопросов из базы
+            currentLevel = lvl; currentIndex = 0; blockScore = 0; isAnswerLocked = false;
             const start = (lvl - 1) * QUESTIONS_PER_BLOCK;
             const end = start + QUESTIONS_PER_BLOCK;
-            
-            if(typeof quizData === 'undefined' || quizData.length < end) {
-                alert("Ошибка: файл questions.js не загружен или неполный!");
-                return;
-            }
-            
+            if(typeof quizData === 'undefined' || quizData.length < end) { alert("Ошибка данных"); return; }
             currentQuestions = quizData.slice(start, end);
-
-            // UI Reset
             document.getElementById('ui-level').innerText = lvl;
-            renderBubbles();
-            showScreen('view-quiz');
-            
-            // Таймер
-            startTimer(TIME_LIMIT_MIN * 60);
-            
-            // Первый вопрос
-            renderQuestion();
+            renderBubbles(); showScreen('view-quiz');
+            startTimer(TIME_LIMIT_MIN * 60); renderQuestion();
         }
 
-        // --- 3. RENDER QUESTION ---
         function renderQuestion() {
             const q = currentQuestions[currentIndex];
             isAnswerLocked = false;
-
-            // Обновляем шапку
             document.getElementById('ui-qnum').innerText = currentIndex + 1;
-            updateBubbles(); // Подсветить текущий пузырь
-
-            // Текст вопроса
+            updateBubbles();
             document.getElementById('ui-question').innerText = q.q;
-            
-            // Скрыть пояснение
             document.getElementById('ui-feedback').classList.add('hidden');
-
-            // Варианты ответов (Shuffle)
-            const list = document.getElementById('ui-options');
-            list.innerHTML = '';
+            const list = document.getElementById('ui-options'); list.innerHTML = '';
             
             let opts = q.opt.map((txt, idx) => ({ txt, isCorrect: idx === q.c }));
-            // Перемешиваем
-            for(let i = opts.length - 1; i > 0; i--){
-                const j = Math.floor(Math.random() * (i+1));
-                [opts[i], opts[j]] = [opts[j], opts[i]];
-            }
+            for(let i = opts.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i+1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
 
             opts.forEach(opt => {
                 const btn = document.createElement('button');
@@ -313,133 +186,67 @@
             });
         }
 
-        // --- 4. HANDLE ANSWER ---
         function onAnswer(isCorrect, btn, qData) {
             if(isAnswerLocked) return;
-            isAnswerLocked = true; // Блокируем повторные нажатия
-
+            isAnswerLocked = true;
             const bubble = document.getElementById(`bubble-${currentIndex}`);
-
             if(isCorrect) {
-                // ПРАВИЛЬНО
-                blockScore++;
-                totalScore++;
-                
-                // Зеленая кнопка
-                btn.classList.remove('border-slate-100', 'bg-white', 'hover:border-blue-400');
-                btn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
-                
-                // Зеленый пузырь
-                bubble.classList.remove('bg-slate-200', 'bg-blue-500');
-                bubble.classList.add('bg-green-500');
-
-                // Автопереход через 1.2 сек
+                blockScore++; totalScore++;
+                btn.className = "w-full text-left p-5 rounded-xl border-2 border-green-500 bg-green-50 text-green-700 font-medium mb-2 transition-all";
+                bubble.classList.add('bg-green-500', 'correct'); bubble.classList.remove('active', 'bg-blue-500');
                 setTimeout(nextQuestionLogic, 1200);
-
             } else {
-                // ОШИБКА
                 if(qData.t) wrongTopics.push(qData.t);
-
-                // Красная кнопка
-                btn.classList.remove('border-slate-100', 'bg-white', 'hover:border-blue-400');
-                btn.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
-
-                // Красный пузырь
-                bubble.classList.remove('bg-slate-200', 'bg-blue-500');
-                bubble.classList.add('bg-red-500');
-
-                // Показать пояснение внизу (inline)
+                btn.className = "w-full text-left p-5 rounded-xl border-2 border-red-500 bg-red-50 text-red-700 font-medium mb-2 transition-all";
+                bubble.classList.add('bg-red-500', 'wrong'); bubble.classList.remove('active', 'bg-blue-500');
                 const fb = document.getElementById('ui-feedback');
                 document.getElementById('ui-explanation').innerText = qData.exp;
                 fb.classList.remove('hidden');
-                
-                // Скролл к пояснению
                 fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                // Фоновое сохранение на случай закрытия браузера
                 sendProgressData('progress');
             }
         }
 
-        function nextQuestionManually() {
-            nextQuestionLogic();
-        }
-
+        function nextQuestionManually() { nextQuestionLogic(); }
         function nextQuestionLogic() {
             currentIndex++;
-            if(currentIndex < QUESTIONS_PER_BLOCK) {
-                renderQuestion();
-            } else {
-                finishLevel();
-            }
+            if(currentIndex < QUESTIONS_PER_BLOCK) { renderQuestion(); } else { finishLevel(); }
         }
 
-        // --- 5. FINISH LEVEL ---
         async function finishLevel(isTimeout = false) {
             clearInterval(timer);
-            
             const percent = Math.round((blockScore / QUESTIONS_PER_BLOCK) * 100);
-            
-            // Сохраняем уровень в базу
             await sendProgressData('save_level', percent);
-
-            // Показываем экран результата
             showScreen('view-level-result');
             document.getElementById('lvl-score').innerText = percent + '%';
-            
+            const btnNext = document.getElementById('btn-next-lvl');
             const title = document.getElementById('lvl-title');
             const msg = document.getElementById('lvl-msg');
             const icon = document.getElementById('lvl-icon');
-            const btnNext = document.getElementById('btn-next-lvl');
 
             if(percent >= PASS_PERCENT) {
-                icon.innerHTML = '🏆';
-                title.innerText = isTimeout ? "Время вышло (Зачет)" : "Блок сдан!";
+                icon.innerHTML = '🏆'; title.innerText = isTimeout ? "Время вышло (Зачет)" : "Блок сдан!";
                 title.className = "text-2xl font-bold mb-2 text-green-600";
-                
-                if(currentLevel < BLOCKS) {
-                    msg.innerText = "Отличный результат. Доступ к следующему блоку открыт.";
-                    btnNext.classList.remove('hidden');
-                } else {
-                    msg.innerText = "Поздравляем! Вы прошли полный курс аттестации.";
-                    btnNext.classList.add('hidden');
-                }
+                if(currentLevel < BLOCKS) { msg.innerText = "Отлично. Доступ открыт."; btnNext.classList.remove('hidden'); }
+                else { msg.innerText = "Поздравляем! Все блоки пройдены."; btnNext.classList.add('hidden'); }
             } else {
-                icon.innerHTML = '💔';
-                title.innerText = isTimeout ? "Время вышло" : "Блок не сдан";
-                title.className = "text-2xl font-bold mb-2 text-red-600";
-                msg.innerText = `Нужно набрать минимум ${PASS_PERCENT}%. Попробуйте позже.`;
-                btnNext.classList.add('hidden');
+                icon.innerHTML = '💔'; title.innerText = "Не сдан"; title.className = "text-2xl font-bold mb-2 text-red-600";
+                msg.innerText = `Нужно ${PASS_PERCENT}%.`; btnNext.classList.add('hidden');
             }
         }
 
-        function startNextLevel() {
-            startLevel(currentLevel + 1);
-        }
-
-        // --- 6. FULL FINISH (REPORT) ---
+        function startNextLevel() { startLevel(currentLevel + 1); }
         async function finishTest() {
-            // Финальная отправка
             await sendProgressData('finish_test');
-
             showScreen('view-final');
-            
             document.getElementById('final-code').innerText = userCode;
             document.getElementById('final-date').innerText = new Date().toLocaleDateString();
             document.getElementById('final-score').innerText = `${totalScore} / 100`;
-
-            // Рекомендации
             if(wrongTopics.length > 0) {
                 const list = document.getElementById('topic-list');
-                const block = document.getElementById('final-recommendations');
-                block.classList.remove('hidden');
+                document.getElementById('final-recommendations').classList.remove('hidden');
                 list.innerHTML = '';
-
-                // Считаем повторы тем
-                let counts = {};
-                wrongTopics.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
-                
-                // Сортируем
+                let counts = {}; wrongTopics.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
                 Object.keys(counts).sort((a,b) => counts[b] - counts[a]).forEach(topic => {
                     let li = document.createElement('li');
                     li.className = "flex justify-between border-b border-slate-200 pb-1 last:border-0";
@@ -449,89 +256,35 @@
             }
         }
 
-        // --- UTILS ---
         function showScreen(id) {
-            ['view-login', 'view-rules', 'view-quiz', 'view-level-result', 'view-final'].forEach(s => {
-                document.getElementById(s).classList.add('hidden');
-            });
+            ['view-login', 'view-rules', 'view-quiz', 'view-level-result', 'view-final'].forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
-
         function renderBubbles() {
-            const container = document.getElementById('ui-bubbles');
-            container.innerHTML = '';
-            for(let i=0; i<QUESTIONS_PER_BLOCK; i++) {
-                let d = document.createElement('div');
-                d.className = 'bubble bg-slate-200';
-                d.id = `bubble-${i}`;
-                container.appendChild(d);
-            }
+            const c = document.getElementById('ui-bubbles'); c.innerHTML = '';
+            for(let i=0; i<QUESTIONS_PER_BLOCK; i++) { let d = document.createElement('div'); d.className = 'bubble bg-slate-200'; d.id = `bubble-${i}`; c.appendChild(d); }
         }
-
         function updateBubbles() {
             for(let i=0; i<QUESTIONS_PER_BLOCK; i++) {
                 let el = document.getElementById(`bubble-${i}`);
-                // Снимаем активный класс со всех
-                el.classList.remove('active', 'bg-blue-500');
-                
-                if(i === currentIndex) {
-                    el.classList.add('active', 'bg-blue-500'); // Текущий синий
-                } else if (i > currentIndex) {
-                    el.classList.add('bg-slate-200'); // Будущий серый
-                }
-                // Прошлые остаются зелеными/красными, т.к. классы .correct/.wrong навешиваются в onAnswer
+                if(i === currentIndex) { el.classList.remove('bg-slate-200'); el.classList.add('active', 'bg-blue-500'); }
+                else if (i > currentIndex) { el.classList.remove('active', 'bg-blue-500'); el.classList.add('bg-slate-200'); }
             }
         }
-
-        function startTimer(seconds) {
-            clearInterval(timer);
-            timeLeft = seconds;
-            updateTimerDisplay();
-            timer = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                if(timeLeft <= 0) {
-                    finishLevel(true);
-                }
-            }, 1000);
+        function startTimer(sec) {
+            clearInterval(timer); timeLeft = sec; updateTimerDisplay();
+            timer = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft <= 0) finishLevel(true); }, 1000);
         }
-
         function updateTimerDisplay() {
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            let s = (timeLeft % 60).toString().padStart(2, '0');
-            let el = document.getElementById('ui-timer');
-            el.innerText = `${m}:${s}`;
-            if(timeLeft < 60) el.classList.add('text-red-500', 'animate-pulse');
-            else el.classList.remove('text-red-500', 'animate-pulse');
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0'); let s = (timeLeft % 60).toString().padStart(2, '0');
+            let el = document.getElementById('ui-timer'); el.innerText = `${m}:${s}`;
+            if(timeLeft < 60) el.parentElement.classList.add('timer-warn'); else el.parentElement.classList.remove('timer-warn');
         }
-
         async function sendProgressData(action, scoreVal = 0) {
-            // Формируем payload в зависимости от действия
-            let payload = {
-                action: action,
-                code: userCode,
-                wrongTopics: JSON.stringify(wrongTopics)
-            };
-
-            if(action === 'save_level') {
-                payload.level = currentLevel;
-                payload.score = scoreVal;
-            } else if (action === 'finish_test') {
-                payload.score = totalScore;
-            } else if (action === 'progress') {
-                // Просто пинг с темами
-                payload.action = 'update_progress';
-                payload.lastQuestion = (currentLevel-1)*25 + currentIndex + 1;
-            }
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
-                    body: JSON.stringify(payload)
-                });
-            } catch(e) { console.error("Save error", e); }
+            let p = { action: action, code: userCode, wrongTopics: JSON.stringify(wrongTopics) };
+            if(action === 'save_level') { p.level = currentLevel; p.score = scoreVal; }
+            else if (action === 'progress') { p.action = 'update_progress'; p.lastQuestion = (currentLevel-1)*QUESTIONS_PER_BLOCK + currentIndex + 1; }
+            try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(p) }); } catch(e) {}
         }
     </script>
 </body>
