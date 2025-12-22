@@ -368,3 +368,171 @@
         function nextQuestionLogic() {
             currentIndex++;
             if(currentIndex < QUESTIONS_PER_BLOCK) {
+                renderQuestion();
+            } else {
+                finishLevel();
+            }
+        }
+
+        // --- 5. FINISH LEVEL ---
+        async function finishLevel(isTimeout = false) {
+            clearInterval(timer);
+            
+            const percent = Math.round((blockScore / QUESTIONS_PER_BLOCK) * 100);
+            
+            // Сохраняем уровень в базу
+            await sendProgressData('save_level', percent);
+
+            // Показываем экран результата
+            showScreen('view-level-result');
+            document.getElementById('lvl-score').innerText = percent + '%';
+            
+            const title = document.getElementById('lvl-title');
+            const msg = document.getElementById('lvl-msg');
+            const icon = document.getElementById('lvl-icon');
+            const btnNext = document.getElementById('btn-next-lvl');
+
+            if(percent >= PASS_PERCENT) {
+                icon.innerHTML = '🏆';
+                title.innerText = isTimeout ? "Время вышло (Зачет)" : "Блок сдан!";
+                title.className = "text-2xl font-bold mb-2 text-green-600";
+                
+                if(currentLevel < BLOCKS) {
+                    msg.innerText = "Отличный результат. Доступ к следующему блоку открыт.";
+                    btnNext.classList.remove('hidden');
+                } else {
+                    msg.innerText = "Поздравляем! Вы прошли полный курс аттестации.";
+                    btnNext.classList.add('hidden');
+                }
+            } else {
+                icon.innerHTML = '💔';
+                title.innerText = isTimeout ? "Время вышло" : "Блок не сдан";
+                title.className = "text-2xl font-bold mb-2 text-red-600";
+                msg.innerText = `Нужно набрать минимум ${PASS_PERCENT}%. Попробуйте позже.`;
+                btnNext.classList.add('hidden');
+            }
+        }
+
+        function startNextLevel() {
+            startLevel(currentLevel + 1);
+        }
+
+        // --- 6. FULL FINISH (REPORT) ---
+        async function finishTest() {
+            // Финальная отправка
+            await sendProgressData('finish_test');
+
+            showScreen('view-final');
+            
+            document.getElementById('final-code').innerText = userCode;
+            document.getElementById('final-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('final-score').innerText = `${totalScore} / 100`;
+
+            // Рекомендации
+            if(wrongTopics.length > 0) {
+                const list = document.getElementById('topic-list');
+                const block = document.getElementById('final-recommendations');
+                block.classList.remove('hidden');
+                list.innerHTML = '';
+
+                // Считаем повторы тем
+                let counts = {};
+                wrongTopics.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+                
+                // Сортируем
+                Object.keys(counts).sort((a,b) => counts[b] - counts[a]).forEach(topic => {
+                    let li = document.createElement('li');
+                    li.className = "flex justify-between border-b border-slate-200 pb-1 last:border-0";
+                    li.innerHTML = `<span>${topic}</span> <span class="font-bold text-red-500">${counts[topic]} ош.</span>`;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        // --- UTILS ---
+        function showScreen(id) {
+            ['view-login', 'view-rules', 'view-quiz', 'view-level-result', 'view-final'].forEach(s => {
+                document.getElementById(s).classList.add('hidden');
+            });
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function renderBubbles() {
+            const container = document.getElementById('ui-bubbles');
+            container.innerHTML = '';
+            for(let i=0; i<QUESTIONS_PER_BLOCK; i++) {
+                let d = document.createElement('div');
+                d.className = 'bubble bg-slate-200';
+                d.id = `bubble-${i}`;
+                container.appendChild(d);
+            }
+        }
+
+        function updateBubbles() {
+            for(let i=0; i<QUESTIONS_PER_BLOCK; i++) {
+                let el = document.getElementById(`bubble-${i}`);
+                // Снимаем активный класс со всех
+                el.classList.remove('active', 'bg-blue-500');
+                
+                if(i === currentIndex) {
+                    el.classList.add('active', 'bg-blue-500'); // Текущий синий
+                } else if (i > currentIndex) {
+                    el.classList.add('bg-slate-200'); // Будущий серый
+                }
+                // Прошлые остаются зелеными/красными, т.к. классы .correct/.wrong навешиваются в onAnswer
+            }
+        }
+
+        function startTimer(seconds) {
+            clearInterval(timer);
+            timeLeft = seconds;
+            updateTimerDisplay();
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if(timeLeft <= 0) {
+                    finishLevel(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            let el = document.getElementById('ui-timer');
+            el.innerText = `${m}:${s}`;
+            if(timeLeft < 60) el.classList.add('text-red-500', 'animate-pulse');
+            else el.classList.remove('text-red-500', 'animate-pulse');
+        }
+
+        async function sendProgressData(action, scoreVal = 0) {
+            // Формируем payload в зависимости от действия
+            let payload = {
+                action: action,
+                code: userCode,
+                wrongTopics: JSON.stringify(wrongTopics)
+            };
+
+            if(action === 'save_level') {
+                payload.level = currentLevel;
+                payload.score = scoreVal;
+            } else if (action === 'finish_test') {
+                payload.score = totalScore;
+            } else if (action === 'progress') {
+                // Просто пинг с темами
+                payload.action = 'update_progress';
+                payload.lastQuestion = (currentLevel-1)*25 + currentIndex + 1;
+            }
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                    body: JSON.stringify(payload)
+                });
+            } catch(e) { console.error("Save error", e); }
+        }
+    </script>
+</body>
+</html>
