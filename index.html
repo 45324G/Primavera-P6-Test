@@ -11,10 +11,16 @@
         body { font-family: 'Inter', sans-serif; }
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .timer-warn { color: #ef4444; animation: pulse 1s infinite; font-weight: 800; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #2563eb; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Стили для печати */
+        @media print {
+            body * { visibility: hidden; }
+            #screen-final, #screen-final * { visibility: visible; }
+            #screen-final { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; max-width: 100%; transform: none; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4">
@@ -24,278 +30,180 @@
     </script>
 
     <div id="screen-login" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl text-center fade-in">
-        <div class="mb-6 inline-block p-4 bg-blue-50 rounded-full text-blue-600 text-3xl shadow-sm">
-            <i class="fa-solid fa-user-shield"></i>
-        </div>
         <h2 class="text-2xl font-bold mb-2 text-slate-900">Primavera Expert</h2>
-        <p class="text-slate-500 mb-6 text-sm">Система аттестации персонала.<br>4 уровня сложности.</p>
-        <div class="relative mb-4">
-            <input type="tel" id="access-code" maxlength="6" placeholder="• • • • • •" 
-                   class="w-full text-center text-3xl tracking-[0.5em] font-bold py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors">
-        </div>
-        <p id="login-error" class="text-red-500 text-xs mb-4 font-bold hidden bg-red-50 p-2 rounded"></p>
-        <button onclick="attemptLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-200">
-            Войти
-        </button>
+        <p class="text-slate-500 mb-6 text-sm">Введите код доступа</p>
+        <input type="tel" id="access-code" maxlength="6" placeholder="• • • • • •" class="w-full text-center text-3xl font-bold py-3 border-2 border-slate-200 rounded-xl mb-4">
+        <p id="login-error" class="text-red-500 text-xs mb-4 hidden"></p>
+        <button onclick="attemptLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all">Войти</button>
     </div>
 
-    <div id="screen-quiz" class="hidden w-full max-w-3xl flex flex-col min-h-screen bg-white sm:bg-transparent">
-        <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20 px-4 py-3">
-            <div class="max-w-4xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <span class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Уровень <span id="ui-level">1</span></span>
-                    <span class="text-sm font-semibold text-slate-500 hidden sm:block">Вопрос <span id="ui-q-num">1</span> из 25</span>
-                </div>
-                <div class="flex items-center gap-2 font-mono text-xl font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg" id="ui-timer-container">
-                    <i class="fa-regular fa-clock text-blue-500"></i> <span id="ui-timer">15:00</span>
-                </div>
-            </div>
-            <div class="h-1.5 bg-slate-100 w-full mt-3 rounded-full overflow-hidden">
-                <div id="ui-progress" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
-            </div>
+    <div id="screen-quiz" class="hidden w-full max-w-3xl flex flex-col min-h-screen">
+        <header class="bg-white border-b p-4 sticky top-0 z-20 flex justify-between">
+            <span class="font-bold">Вопрос <span id="ui-q-num">1</span></span>
+            <span class="font-mono bg-slate-100 px-2 rounded" id="ui-timer">15:00</span>
         </header>
-        <main class="flex-grow flex flex-col items-center justify-start sm:justify-center p-4 w-full">
-            <div class="w-full max-w-2xl fade-in pb-10">
-                <div class="bg-white sm:rounded-2xl sm:shadow-lg sm:border border-slate-200 p-5 sm:p-8 relative">
-                    <h3 id="question-text" class="text-lg sm:text-2xl font-bold text-slate-900 mb-8 leading-snug">Загрузка...</h3>
-                    <div id="options-list" class="space-y-3"></div>
-                </div>
+        <main class="flex-grow flex flex-col items-center p-4">
+            <div class="w-full max-w-2xl bg-white rounded-2xl shadow p-6">
+                <h3 id="question-text" class="text-xl font-bold mb-6">...</h3>
+                <div id="options-list" class="space-y-3"></div>
             </div>
         </main>
     </div>
 
-    <div id="screen-level-result" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-md w-full relative">
-            <div id="level-icon" class="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl shadow-sm"></div>
-            <h2 id="level-title" class="text-2xl font-bold mb-2 text-slate-800">Уровень завершен</h2>
-            <div class="text-6xl font-black my-4 text-slate-900 tracking-tighter" id="level-score">0%</div>
-            <p id="level-msg" class="text-slate-500 mb-8 font-medium leading-relaxed"></p>
-            <div class="flex flex-col gap-3">
-                <button id="btn-next-level" onclick="startNextLevel()" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-200 transform transition-all hover:scale-[1.02]">
-                    Следующий уровень <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
-                <button onclick="finishTestFull()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-colors">
-                    Завершить тестирование
-                </button>
-            </div>
+    <div id="modal-error" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white p-6 rounded-2xl max-w-md w-full text-center fade-in">
+            <div class="text-red-500 text-4xl mb-2"><i class="fa-solid fa-circle-xmark"></i></div>
+            <h3 class="text-lg font-bold text-slate-800">Ошибка</h3>
+            <p id="modal-error-text" class="text-slate-600 my-4 text-sm text-left bg-slate-50 p-3 rounded"></p>
+            <button onclick="closeErrorModal()" class="bg-slate-800 text-white px-6 py-2 rounded-lg w-full">Понятно, дальше</button>
         </div>
     </div>
 
-    <div id="screen-final" class="hidden w-full max-w-lg bg-white p-8 rounded-3xl shadow-xl text-center fade-in fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto">
-        <div class="mb-4 text-green-500 text-5xl"><i class="fa-solid fa-circle-check"></i></div>
-        <h2 class="text-2xl font-bold mb-2 text-slate-900">Результаты сохранены</h2>
-        <div class="bg-slate-50 p-3 rounded-lg text-xs text-slate-400 font-mono mb-6">SESSION: <span id="final-code-display"></span></div>
+    <div id="screen-final" class="hidden w-full max-w-2xl bg-white p-10 rounded-3xl shadow-xl text-center fade-in">
+        <div class="mb-4 text-green-500 text-5xl no-print"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 class="text-3xl font-bold mb-2 text-slate-900">Отчет о тестировании</h2>
+        <p class="text-slate-500 mb-6">Primavera P6 Assessment</p>
         
-        <div id="recommendation-block" class="text-left hidden border-t border-slate-100 pt-4">
-            <h3 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider"><i class="fa-solid fa-book-open text-blue-500 mr-2"></i> Рекомендуемые темы:</h3>
-            <ul id="topic-list" class="space-y-2 text-sm text-slate-600"></ul>
+        <div class="grid grid-cols-2 gap-4 text-left mb-6 border-b pb-6">
+            <div><span class="text-xs text-slate-400">Сотрудник (ID):</span><div class="font-mono font-bold" id="final-code"></div></div>
+            <div><span class="text-xs text-slate-400">Дата:</span><div class="font-bold" id="final-date"></div></div>
+            <div><span class="text-xs text-slate-400">Результат:</span><div class="font-bold text-blue-600" id="final-score"></div></div>
+        </div>
+
+        <div id="recommendation-block" class="text-left hidden">
+            <h3 class="text-sm font-bold text-slate-800 mb-3 uppercase">Темы для изучения:</h3>
+            <ul id="topic-list" class="space-y-2 text-sm text-slate-600 border p-4 rounded-lg bg-slate-50"></ul>
         </div>
         
-        <p class="mt-6 text-sm text-slate-400">Вы можете закрыть это окно.</p>
+        <div class="mt-8 flex gap-3 no-print">
+            <button onclick="window.print()" class="flex-1 bg-slate-800 text-white py-3 rounded-xl"><i class="fa-solid fa-print mr-2"></i> Распечатать / PDF</button>
+            <button onclick="location.reload()" class="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl">Закрыть</button>
+        </div>
     </div>
 
     <script src="questions.js"></script>
-
     <script>
-        const QUESTIONS_PER_LEVEL = 25; 
-        const LEVEL_TIME_MINUTES = 15;  
-        const PASS_THRESHOLD = 60;      
-
-        let currentLevel = 1;
-        let currentLevelQuestions = [];
-        let currentQIndex = 0;
-        let levelScoreRaw = 0;
-        let userCode = "";
-        let timerInterval;
-        let timeRemaining = 0;
-        let isAnswered = false;
+        // CONFIG
+        const LEVELS = [25, 50, 75, 100]; // Границы блоков (25, 26-50, etc)
         
-        // Сюда будем собирать темы ошибок
+        // STATE
+        let currentQIndex = 0;
+        let score = 0;
+        let userCode = "";
         let wrongTopics = []; 
+        let isPaused = false;
 
+        // LOGIN
         async function attemptLogin() {
-            const input = document.getElementById('access-code');
             const btn = document.getElementById('btn-login');
-            const err = document.getElementById('login-error');
-            userCode = input.value.trim();
-            if (userCode.length < 6) { err.innerText = "Код должен состоять из 6 цифр"; err.classList.remove('hidden'); return; }
-            btn.disabled = true; btn.innerHTML = '<div class="loader mx-auto"></div>'; err.classList.add('hidden');
+            userCode = document.getElementById('access-code').value.trim();
+            if (userCode.length < 6) return alert("Код должен быть 6 цифр");
+            
+            btn.disabled = true; btn.innerText = "Загрузка...";
             try {
+                // Вызов API (Login)
                 const res = await fetch(`${API_URL}?code=${userCode}`);
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('screen-login').classList.add('hidden');
-                    startLevel(1);
+                    document.getElementById('screen-quiz').classList.remove('hidden');
+                    loadQuestion();
                 } else {
-                    err.innerText = data.message || "Ошибка доступа"; err.classList.remove('hidden'); btn.disabled = false; btn.innerHTML = 'Войти';
+                    alert(data.message); btn.disabled = false; btn.innerText = "Войти";
                 }
-            } catch (e) {
-                console.error(e); err.innerText = "Ошибка соединения"; err.classList.remove('hidden'); btn.disabled = false; btn.innerHTML = 'Войти';
-            }
+            } catch (e) { console.error(e); alert("Ошибка сети"); btn.disabled = false; }
         }
 
-        function startLevel(lvl) {
-            currentLevel = lvl; currentQIndex = 0; levelScoreRaw = 0;
-            const startIdx = (lvl - 1) * QUESTIONS_PER_LEVEL;
-            const endIdx = startIdx + QUESTIONS_PER_LEVEL;
-            if (typeof quizData === 'undefined' || quizData.length < endIdx) { alert("Ошибка данных вопросов"); return; }
-            currentLevelQuestions = quizData.slice(startIdx, endIdx);
-            document.getElementById('screen-level-result').classList.add('hidden');
-            document.getElementById('screen-quiz').classList.remove('hidden');
-            document.getElementById('ui-level').innerText = lvl;
-            startTimer(LEVEL_TIME_MINUTES * 60);
-            loadQuestion();
-        }
-
+        // LOAD QUESTION
         function loadQuestion() {
-            isAnswered = false;
-            const qData = currentLevelQuestions[currentQIndex];
-            document.getElementById('ui-q-num').innerText = currentQIndex + 1;
-            document.getElementById('ui-progress').style.width = `${((currentQIndex) / QUESTIONS_PER_LEVEL) * 100}%`;
+            if (currentQIndex >= quizData.length) { finishTest(); return; }
+            
+            const qData = quizData[currentQIndex];
+            document.getElementById('ui-q-num').innerText = qData.id; // Используем ID из JSON (1-100)
             document.getElementById('question-text').innerText = qData.q;
+            
             const list = document.getElementById('options-list');
             list.innerHTML = '';
-            
-            // Перемешивание с сохранением правильности
-            let optionsObj = qData.opt.map((text, idx) => { return { text: text, isCorrect: (idx === qData.c) }; });
-            for (let i = optionsObj.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [optionsObj[i], optionsObj[j]] = [optionsObj[j], optionsObj[i]];
-            }
 
-            optionsObj.forEach((opt, index) => {
+            // Shuffle
+            let opts = qData.opt.map((txt, i) => ({ txt, isCorrect: i === qData.c }));
+            opts.sort(() => Math.random() - 0.5);
+
+            opts.forEach(o => {
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-4 sm:p-5 rounded-xl border-2 border-slate-100 bg-white hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 flex items-start gap-4 group active:scale-[0.98]`;
-                btn.innerHTML = `
-                    <span class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold mt-0.5 group-hover:bg-blue-500 group-hover:text-white transition-colors text-sm">${['A','B','C','D'][index]}</span>
-                    <span class="text-slate-700 font-medium leading-snug text-base sm:text-lg">${opt.text}</span>
-                `;
-                btn.onclick = () => handleAnswer(opt.isCorrect, btn, qData);
+                btn.className = "w-full text-left p-4 border rounded-xl hover:bg-blue-50 transition-all";
+                btn.innerText = o.txt;
+                btn.onclick = () => handleAnswer(o.isCorrect, qData);
                 list.appendChild(btn);
             });
         }
 
-        function handleAnswer(isCorrect, btn, qData) {
-            if (isAnswered) return;
-            isAnswered = true;
+        // HANDLE ANSWER
+        function handleAnswer(isCorrect, qData) {
+            if (isPaused) return;
+            
             if (isCorrect) {
-                levelScoreRaw++;
-                btn.className = btn.className.replace('border-slate-100', 'border-green-500 bg-green-50');
-                btn.querySelector('span:first-child').className = 'flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white font-bold mt-0.5 text-sm';
+                score++;
+                nextStep();
             } else {
-                btn.className = btn.className.replace('border-slate-100', 'border-red-500 bg-red-50');
-                btn.querySelector('span:first-child').className = 'flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-bold mt-0.5 text-sm';
-                // Сохраняем тему ошибки
-                if(qData.t) wrongTopics.push(qData.t);
+                // Ошибка -> Показываем модалку с пояснением
+                isPaused = true;
+                wrongTopics.push(qData.t || "Общее");
+                document.getElementById('modal-error-text').innerText = qData.exp;
+                document.getElementById('modal-error').classList.remove('hidden');
+                
+                // Фоновое сохранение прогресса (чтобы знать, на чем ошибся, если закроет)
+                sendProgress(currentQIndex + 1, JSON.stringify(wrongTopics));
             }
-            setTimeout(() => {
-                currentQIndex++;
-                if (currentQIndex < QUESTIONS_PER_LEVEL) loadQuestion();
-                else endLevel();
-            }, 800);
         }
 
-        function startTimer(seconds) {
-            clearInterval(timerInterval);
-            timeRemaining = seconds;
-            updateTimerUI();
-            timerInterval = setInterval(() => {
-                timeRemaining--;
-                updateTimerUI();
-                if (timeRemaining <= 0) { clearInterval(timerInterval); endLevel(true); }
-            }, 1000);
+        function closeErrorModal() {
+            document.getElementById('modal-error').classList.add('hidden');
+            isPaused = false;
+            nextStep();
         }
 
-        function updateTimerUI() {
-            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-            const s = (timeRemaining % 60).toString().padStart(2, '0');
-            const el = document.getElementById('ui-timer');
-            const container = document.getElementById('ui-timer-container');
-            el.innerText = `${m}:${s}`;
-            if (timeRemaining < 60) container.classList.add('timer-warn', 'text-red-600', 'bg-red-50');
-            else container.classList.remove('timer-warn', 'text-red-600', 'bg-red-50');
+        function nextStep() {
+            currentQIndex++;
+            loadQuestion();
         }
 
-        async function endLevel(timeOut = false) {
-            clearInterval(timerInterval);
+        async function sendProgress(lastQ, topicsJson) {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    body: JSON.stringify({ action: 'update_progress', code: userCode, lastQuestion: lastQ, wrongTopics: topicsJson })
+                });
+            } catch(e) {}
+        }
+
+        async function finishTest() {
             document.getElementById('screen-quiz').classList.add('hidden');
-            const percentage = Math.round((levelScoreRaw / QUESTIONS_PER_LEVEL) * 100);
-            saveProgress(currentLevel, percentage);
-            const modal = document.getElementById('screen-level-result');
-            const icon = document.getElementById('level-icon');
-            const title = document.getElementById('level-title');
-            const msg = document.getElementById('level-msg');
-            const btnNext = document.getElementById('btn-next-level');
-            modal.classList.remove('hidden');
-            document.getElementById('level-score').innerText = percentage + '%';
-
-            if (percentage >= PASS_THRESHOLD) {
-                icon.className = 'mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl shadow-sm bg-green-100 text-green-600';
-                icon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
-                title.innerText = timeOut ? "Время вышло (зачет)" : `Уровень ${currentLevel} пройден!`;
-                if (currentLevel < 4) {
-                    msg.innerText = `Доступ к уровню ${currentLevel + 1} открыт.`;
-                    btnNext.classList.remove('hidden');
-                } else {
-                    msg.innerText = "Поздравляем! Вы прошли аттестацию.";
-                    btnNext.classList.add('hidden');
-                }
-            } else {
-                icon.className = 'mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl shadow-sm bg-red-100 text-red-600';
-                icon.innerHTML = '<i class="fa-solid fa-heart-crack"></i>';
-                title.innerText = timeOut ? "Время вышло!" : "Не сдан";
-                msg.innerText = `Минимум ${PASS_THRESHOLD}%.`;
-                btnNext.classList.add('hidden');
-            }
-        }
-
-        async function saveProgress(lvl, score) {
-            try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'save_level', code: userCode, level: lvl, score: score })
-                });
-            } catch (e) { console.error("Save error", e); }
-        }
-
-        function startNextLevel() { startLevel(currentLevel + 1); }
-
-        async function finishTestFull() {
-            try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'finish_test', code: userCode })
-                });
-            } catch (e) {}
-            
-            document.getElementById('screen-level-result').classList.add('hidden');
             document.getElementById('screen-final').classList.remove('hidden');
-            document.getElementById('final-code-display').innerText = userCode;
             
-            // Генерация списка рекомендаций
-            generateRecommendations();
-        }
+            // Заполняем отчет
+            document.getElementById('final-code').innerText = userCode;
+            document.getElementById('final-date').innerText = new Date().toLocaleString("ru-RU");
+            document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+            
+            // Темы
+            if (wrongTopics.length > 0) {
+                const list = document.getElementById('topic-list');
+                document.getElementById('recommendation-block').classList.remove('hidden');
+                // Убираем дубликаты и считаем
+                const counts = {};
+                wrongTopics.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
+                Object.keys(counts).sort((a,b) => counts[b] - counts[a]).forEach(t => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${t}</b> (${counts[t]} ош.)`;
+                    list.appendChild(li);
+                });
+            }
 
-        function generateRecommendations() {
-            if(wrongTopics.length === 0) return;
-            
-            const list = document.getElementById('topic-list');
-            document.getElementById('recommendation-block').classList.remove('hidden');
-            
-            // Считаем частоту ошибок
-            const counts = {};
-            wrongTopics.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
-            
-            // Сортируем: сверху те, где больше всего ошибок
-            const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
-            
-            // Выводим топ-5
-            sorted.slice(0, 5).forEach(topic => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold mr-2">${counts[topic]} ош.</span> ${topic}`;
-                list.appendChild(li);
+            // Финальная отправка
+            await fetch(API_URL, {
+                method: 'POST', mode: 'no-cors',
+                body: JSON.stringify({ action: 'finish_test', code: userCode, score: score, wrongTopics: JSON.stringify(wrongTopics) })
             });
         }
     </script>
